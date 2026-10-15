@@ -1,0 +1,1471 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff0f6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="おみくじ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>おみくじガチャ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-screen phone app. Date and title on top, capsule machine in the middle,
+   one big pill button below. The result opens as a card over the screen. */
+:root {
+  --bg: #fff0f6;
+  --dot: #ffd3e4;
+  --ink: #4a2c5a;
+  --pink: #ff6fa5;
+  --pink-deep: #e0468a;
+  --sun: #ffd45e;
+  --mint: #5fdcae;
+  --sky: #62c4f5;
+  --lilac: #b39af5;
+  --orange: #ffa04d;
+  --white: #ffffff;
+  --shadow: rgba(74, 44, 90, .28);
+  --display: 'Mochiy Pop One', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  --body: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 2.5px, transparent 3px);
+  background-size: 28px 28px;
+  color: var(--ink);
+  font-family: var(--body);
+  font-weight: 700;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2.6vh, 24px);
+  text-align: center;
+}
+
+/* ---------- title ---------- */
+.head { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.kicker {
+  margin: 0;
+  padding: 4px 16px;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--ink);
+  font-size: 14px;
+  letter-spacing: .05em;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(32px, 10.5vw, 46px);
+  line-height: 1.1;
+  letter-spacing: .04em;
+  -webkit-text-stroke: 8px var(--ink);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 4px 0 var(--ink));
+}
+
+/* ---------- machine ---------- */
+.machine {
+  --mw: min(88vw, 45vh, 360px);
+  --mw: min(88vw, 45dvh, 360px);
+  position: relative;
+  flex: none;
+  width: var(--mw);
+  aspect-ratio: 770 / 1080;
+}
+
+.parts {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(0 6px 10px rgba(120, 80, 150, .22));
+}
+
+.dome {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 54.6%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.glass {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 60%, rgba(214, 198, 255, .38) 100%),
+    linear-gradient(160deg, rgba(255, 255, 255, .35), rgba(255, 235, 248, .12) 55%, rgba(220, 205, 255, .25)),
+    rgba(255, 255, 255, .5);
+  box-shadow:
+    inset 0 0 0 2px rgba(206, 196, 236, .75),
+    inset 12px 10px 26px rgba(255, 255, 255, .5),
+    inset -10px -14px 24px rgba(214, 196, 255, .3);
+}
+
+.hl { position: absolute; z-index: 6; pointer-events: none; }
+.hl-a { left: 15%; top: 10%; width: 22%; height: 9%; border-radius: 50%; background: rgba(255, 255, 255, .8); rotate: -40deg; filter: blur(.5px); }
+.hl-b { left: 9%; top: 26%; width: 3.2%; aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, .85); }
+.hl-c { left: 7%; top: 7%; width: 86%; aspect-ratio: 1; border-radius: 50%; border-right: 5px solid rgba(255, 255, 255, .7); rotate: -18deg; }
+
+.cap {
+  position: absolute;
+  display: block;
+  width: 27%;
+  aspect-ratio: 1;
+  margin: -13.5% 0 0 -13.5%;
+  transition: left .2s ease-in-out, top .2s ease-in-out;
+}
+
+.cap .body {
+  position: absolute;
+  display: block;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--c), var(--c)) 0 100% / 100% 50% no-repeat,
+    rgba(255, 255, 255, .4);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, .75),
+    inset -5px -7px 12px rgba(120, 90, 160, .14),
+    inset 5px 5px 10px rgba(255, 255, 255, .65),
+    0 3px 6px rgba(120, 90, 160, .16);
+  transition: rotate .2s ease-in-out;
+}
+
+.cap .body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: rgba(255, 255, 255, .8);
+}
+
+.cap::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  top: 12%;
+  width: 30%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 40%, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%);
+  rotate: -30deg;
+}
+
+.cap.rainbow .body {
+  background:
+    linear-gradient(90deg, #ff9ec6, #ffb67a, #ffe27a, #8fe8b8, #7fd0f5, #b7a0f2) 0 100% / 100% 50% no-repeat,
+    rgba(255, 255, 255, .4);
+}
+
+.machine.shake { animation: shake .16s linear infinite; }
+.machine.shake .crank-bar { animation: spin .5s linear infinite; transform-box: fill-box; transform-origin: center; }
+
+/* capsule that pops out and opens */
+.winner {
+  position: absolute;
+  left: 50%;
+  top: 27.7%;
+  width: 30%;
+  aspect-ratio: 1;
+  margin: -15% 0 0 -15%;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0);
+  filter: drop-shadow(0 4px 6px rgba(120, 80, 150, .3));
+}
+
+.winner.pop { opacity: 1; animation: winnerPop .6s cubic-bezier(.2, 1.5, .4, 1) forwards; }
+
+.half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .8), inset 0 -6px 10px rgba(255, 255, 255, .4);
+}
+
+.half.top { top: 0; background: var(--c); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+.half.bot { bottom: 0; background: rgba(255, 255, 255, .78); border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+
+.half.top::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 16%;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 70%);
+}
+
+.burst {
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0, var(--sun) 30%, rgba(255, 212, 94, 0) 62%);
+  opacity: 0;
+  transform: scale(.2);
+}
+
+.winner.open .burst { animation: burst .7s ease-out forwards; }
+.winner.open .top { animation: openTop .6s ease-in forwards; }
+.winner.open .bot { animation: openBot .6s ease-in forwards; }
+
+/* ---------- main button ---------- */
+.draw {
+  width: min(82vw, 330px);
+  min-height: 74px;
+  padding: 8px 20px;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff8fbb, var(--pink));
+  box-shadow: 0 7px 0 var(--ink), 0 14px 22px var(--shadow);
+  color: var(--white);
+  font-family: var(--display);
+  font-size: clamp(24px, 7.4vw, 30px);
+  letter-spacing: .06em;
+  -webkit-text-stroke: 5px var(--ink);
+  paint-order: stroke fill;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: breathe 2.2s ease-in-out infinite;
+}
+
+.draw:active:not(:disabled) {
+  transform: translateY(6px);
+  box-shadow: 0 1px 0 var(--ink), 0 6px 12px var(--shadow);
+  animation: none;
+}
+
+.draw:disabled { animation: none; cursor: default; }
+
+.draw:focus-visible, .again:focus-visible {
+  outline: 4px solid var(--sky);
+  outline-offset: 4px;
+}
+
+.hint { margin: 0; font-size: 13px; letter-spacing: .05em; }
+
+/* ---------- result ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
+  gap: 22px;
+  padding:
+    max(16px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(74, 44, 90, .6);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.overlay[hidden] { display: none; }
+
+.card {
+  --rank: #ff5c93;
+  --soft: #ffe0ec;
+  --dot: #ffc2d8;
+  position: relative;
+  width: min(100%, 340px);
+  padding: 40px 20px 22px;
+  background:
+    radial-gradient(var(--dot) 3px, transparent 3.5px) 0 0 / 22px 22px,
+    linear-gradient(180deg, var(--soft), var(--white) 75%);
+  border: 4px solid var(--ink);
+  border-radius: 34px;
+  box-shadow: 0 9px 0 var(--ink), 0 22px 30px rgba(0, 0, 0, .25);
+  text-align: center;
+  animation: cardIn .6s cubic-bezier(.2, 1.35, .35, 1);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 2px dashed rgba(255, 255, 255, .95);
+  border-radius: 26px;
+  pointer-events: none;
+}
+
+.card-label {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 5px 16px;
+  transform: translate(-50%, -50%);
+  background: var(--white);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--rank);
+  font-size: 13px;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+
+.mascot {
+  position: absolute;
+  left: -6px;
+  top: -36px;
+  z-index: 3;
+  width: 64px;
+  height: 64px;
+  transform: rotate(-12deg);
+  filter: drop-shadow(0 3px 0 var(--ink));
+  animation: wobble 1.8s ease-in-out infinite;
+}
+
+.mascot svg { display: block; width: 100%; height: 100%; }
+
+.deco { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
+.deco .d {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  animation: bob 2.4s ease-in-out infinite;
+}
+
+.seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 10px 26px;
+}
+
+.seal-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 0 rgba(74, 44, 90, .25));
+}
+
+.rank {
+  position: relative;
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(60px, 19vw, 80px);
+  line-height: 1.1;
+  letter-spacing: .04em;
+  color: var(--rank);
+  -webkit-text-stroke: 8px var(--ink);
+  paint-order: stroke fill;
+  white-space: pre-line;
+  filter: drop-shadow(0 4px 0 var(--ink));
+}
+
+/* 幻の超ウルトラ大吉 */
+.card.ultra {
+  --rank: #ffb400;
+  --soft: #fff3c4;
+  --dot: #ffe08a;
+  background:
+    radial-gradient(var(--dot) 3px, transparent 3.5px) 0 0 / 22px 22px,
+    linear-gradient(135deg, #ffe0ec, #fff3c4, #dcf7ec, #dff2fd, #ece6fd, #ffe0ec) 0 50% / 300% 300%;
+  animation:
+    cardIn .6s cubic-bezier(.2, 1.35, .35, 1),
+    shimmer 4s ease-in-out infinite alternate,
+    glow 1.2s ease-in-out infinite alternate;
+}
+
+.card.ultra .rank {
+  font-size: clamp(34px, 10.5vw, 44px);
+  line-height: 1.2;
+  animation: rainbowText 2.4s linear infinite;
+}
+
+.stars {
+  position: relative;
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 4px 12px;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+.stars svg { width: 24px; height: 24px; }
+
+.advice {
+  position: relative;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.advice::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--white);
+  border-left: 3px solid var(--ink);
+  border-top: 3px solid var(--ink);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.lucky {
+  position: relative;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.lucky div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 3px 12px 3px 3px;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+.lucky dt {
+  flex: none;
+  padding: 5px 10px;
+  background: var(--soft);
+  color: var(--ink);
+  border: 2px solid var(--rank);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+
+.lucky dd {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.chip {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--pink);
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(-16deg) translateY(-3px); }
+}
+@keyframes bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+
+.again {
+  width: min(82vw, 300px);
+  min-height: 58px;
+  padding: 6px 18px;
+  background: var(--sun);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 6px 0 var(--ink);
+  font-family: var(--display);
+  font-size: 20px;
+  letter-spacing: .06em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.again:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--ink); }
+
+.snd {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  z-index: 12;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--white);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.snd svg { width: 22px; height: 22px; }
+.snd .x { display: none; }
+.snd.off .x { display: block; }
+.snd.off .waves { display: none; }
+
+.confetti { position: fixed; inset: 0; z-index: 20; pointer-events: none; overflow: hidden; }
+.conf { position: absolute; top: 0; width: 10px; height: 14px; border-radius: 3px; }
+
+.star {
+  position: absolute;
+  left: 0;
+  top: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  will-change: transform, opacity;
+}
+
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: radial-gradient(circle, #ffffff, #fff6c2 60%, #ffe27a);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flash.go { animation: flash .9s ease-out; }
+#app.megashake { animation: megashake .12s linear 6; }
+.machine.glow .dome { animation: domeGlow .35s ease-in-out infinite alternate; }
+
+@keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+@keyframes glow {
+  from { box-shadow: 0 9px 0 var(--ink), 0 0 18px 4px rgba(255, 212, 94, .7); }
+  to { box-shadow: 0 9px 0 var(--ink), 0 0 42px 14px rgba(255, 160, 77, .9); }
+}
+@keyframes rainbowText {
+  0% { color: #ff5c93; }
+  17% { color: #ffa04d; }
+  33% { color: #ffd45e; }
+  50% { color: #5fdcae; }
+  67% { color: #62c4f5; }
+  83% { color: #b39af5; }
+  100% { color: #ff5c93; }
+}
+@keyframes domeGlow {
+  from { filter: drop-shadow(0 0 8px rgba(255, 212, 94, .6)); }
+  to { filter: drop-shadow(0 0 26px rgba(255, 196, 70, 1)); }
+}
+@keyframes flash { 0% { opacity: 0; } 15% { opacity: .95; } 100% { opacity: 0; } }
+@keyframes megashake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-6px, 3px); }
+  50% { transform: translate(5px, -4px); }
+  75% { transform: translate(-4px, -3px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes shake {
+  0% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-4px, 2px) rotate(-3deg); }
+  50% { transform: translate(3px, -2px) rotate(2deg); }
+  75% { transform: translate(-2px, 3px) rotate(-2deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+@keyframes spin { to { rotate: 360deg; } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes winnerPop {
+  0% { transform: scale(0) rotate(-50deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes openTop {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(-30%, -90%) rotate(-35deg); opacity: 0; }
+}
+@keyframes openBot {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(30%, 90%) rotate(35deg); opacity: 0; }
+}
+@keyframes burst {
+  0% { opacity: 0; transform: scale(.2); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes cardIn {
+  0% { opacity: 0; transform: scale(.5) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<main id="app">
+  <header class="head">
+    <p class="kicker" id="kicker">今日の運勢</p>
+  </header>
+
+  <div class="machine" id="machine">
+    <div class="dome">
+      <div class="glass" id="glass">
+        <span class="hl hl-a"></span><span class="hl hl-b"></span><span class="hl hl-c"></span>
+      </div>
+    </div>
+    <div class="winner" id="winner">
+      <div class="burst"></div>
+      <div class="half bot"></div>
+      <div class="half top"></div>
+    </div>
+    <svg class="parts" viewBox="0 140 770 1080" aria-hidden="true">
+      <defs>
+        <linearGradient id="gBase" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#efe2ee"/>
+          <stop offset=".22" stop-color="#fffafc"/>
+          <stop offset=".72" stop-color="#fffafc"/>
+          <stop offset="1" stop-color="#eadbeb"/>
+        </linearGradient>
+        <linearGradient id="gShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="1" stop-color="#e3cfe4" stop-opacity=".55"/>
+        </linearGradient>
+        <linearGradient id="gLid" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#efe3ef"/>
+        </linearGradient>
+        <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffa6cb"/>
+          <stop offset="1" stop-color="#ff6fa5"/>
+        </linearGradient>
+        <linearGradient id="gHole" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#b3a8c2"/>
+          <stop offset="1" stop-color="#ddd5e6"/>
+        </linearGradient>
+      </defs>
+
+      <ellipse cx="385" cy="1206" rx="350" ry="12" fill="rgba(120,80,150,.18)"/>
+
+      <!-- base -->
+      <path d="M88,742 L682,742 C690,830 735,960 748,1074 L22,1074 C35,960 80,830 88,742 Z" fill="url(#gBase)" stroke="#d9c4de" stroke-width="3"/>
+      <path d="M88,742 L682,742 C690,830 735,960 748,1074 L22,1074 C35,960 80,830 88,742 Z" fill="url(#gShade)"/>
+      <rect x="62" y="716" width="646" height="28" rx="14" fill="url(#gBase)" stroke="#d9c4de" stroke-width="3"/>
+      <rect x="18" y="1062" width="734" height="152" rx="50" fill="url(#gBase)" stroke="#d9c4de" stroke-width="3"/>
+      <rect x="18" y="1062" width="734" height="152" rx="50" fill="url(#gShade)"/>
+
+      <!-- outlet -->
+      <rect x="237" y="985" width="296" height="205" rx="26" fill="url(#gBase)" stroke="#d9c4de" stroke-width="3"/>
+      <rect x="268" y="1010" width="234" height="70" rx="10" fill="url(#gHole)"/>
+      <path d="M268,1080 L502,1080 L522,1156 L248,1156 Z" fill="#f4eaf3" stroke="#d9c4de" stroke-width="3" stroke-linejoin="round"/>
+
+      <!-- pink button -->
+      <circle cx="265" cy="880" r="98" fill="#fff7fa" stroke="#e6c8da" stroke-width="4"/>
+      <circle cx="265" cy="880" r="80" fill="url(#gPink)" stroke="#ff86b4" stroke-width="3"/>
+      <ellipse cx="238" cy="835" rx="34" ry="13" fill="#fff" opacity=".45" transform="rotate(-20 238 835)"/>
+      <text x="265" y="898" text-anchor="middle" font-size="46" fill="#fff" stroke="#e04a8e" stroke-width="7" stroke-linejoin="round" paint-order="stroke" style="font-family:var(--display)">500円</text>
+      <g stroke="#ff77aa" stroke-width="8" stroke-linecap="round" fill="none">
+        <path d="M151,850 L128,843"/>
+        <path d="M182,797 L165,780"/>
+        <path d="M234,766 L229,746"/>
+      </g>
+
+      <!-- crank -->
+      <circle cx="505" cy="890" r="98" fill="#fff7fa" stroke="#e6c8da" stroke-width="4"/>
+      <circle cx="505" cy="890" r="82" fill="url(#gBase)" stroke="#d9c4de" stroke-width="3"/>
+      <rect class="crank-bar" x="428" y="862" width="154" height="56" rx="28" fill="#fffafc" stroke="#d9c4de" stroke-width="3"/>
+      <path d="M435,800 Q500,758 569,790" fill="none" stroke="#ff77aa" stroke-width="10" stroke-linecap="round"/>
+      <polygon points="584,798 568,773 554,802" fill="#ff77aa" stroke="#ff77aa" stroke-width="4" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <button class="draw" id="draw" type="button"><span id="drawLabel">ガチャを引く</span></button>
+  <p class="hint">何回でも引けるよ。幻の大当たりが隠れているかも…</p>
+</main>
+
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="rank">
+  <article class="card" id="card">
+    <div class="deco" id="deco" aria-hidden="true"></div>
+    <div class="mascot" id="mascot" aria-hidden="true"></div>
+    <p class="card-label" id="cardLabel">今日の運勢</p>
+    <div class="seal">
+      <svg class="seal-bg" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true"><polygon id="sealPoly" points="" fill="#ffffff" stroke="#4a2c5a" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+      <h2 class="rank" id="rank">大吉</h2>
+    </div>
+    <div class="stars" id="stars" role="img"></div>
+    <p class="advice" id="advice"></p>
+    <dl class="lucky">
+      <div><dt>ラッキーアイテム</dt><dd id="item"></dd></div>
+      <div><dt>ラッキーカラー</dt><dd><i class="chip" id="chip"></i><span id="lcolor"></span></dd></div>
+    </dl>
+  </article>
+  <button class="again" id="again" type="button">もう一度引く</button>
+</div>
+
+<button class="snd" id="snd" type="button" aria-label="効果音" aria-pressed="true">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+    <g class="waves" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></g>
+    <path class="x" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </svg>
+</button>
+<div class="flash" id="flash" aria-hidden="true"></div>
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script>
+(function () {
+  var FORTUNES = [
+    { name: '大吉', stars: 5, w: 12, color: '#ff5c93', soft: '#ffe0ec',
+      msgs: [
+        '今日は何をやってもうまくいく日。気になっていたことに一歩ふみ出そう！',
+        'うれしい知らせがとどきそう。スマホの通知をこまめにチェックしてね。',
+        'あなたの笑顔が幸運を呼ぶ日。いつもより少し大きく笑ってみて。',
+        '思いきった選択が正解に。直感を信じてGO！',
+        'ずっと待っていた返事がもらえるかも。深呼吸して受け取ろう。'
+      ],
+      items: ['星のキーホルダー', '金色のペン', 'いちごキャンディ', '新しいハンカチ', '花柄のマグカップ', 'ふわふわのタオル'] },
+    { name: '中吉', stars: 4, w: 22, color: '#ff9a3d', soft: '#ffeed9',
+      msgs: [
+        'コツコツが実を結ぶ日。小さな成果をちゃんと自分でほめてあげて。',
+        '人との会話から良いヒントが見つかりそう。聞き役になるとさらに吉。',
+        '午後からぐんと調子が上がりそう。大事なことは後半に回してみて。',
+        'ちょっとした親切が巡って返ってくる予感。ひとつ誰かに譲ってみよう。',
+        'いつもと違う帰り道に発見あり。寄り道を楽しんでね。',
+        '会議や相談ごとでいい流れに。思ったことは遠慮せず口に出してみよう。',
+        '新しいことを始めるのにちょうどいい日。まずは小さく試してみて。',
+        'メッセージの返事が早いほど運気アップ。気づいたらすぐ返そう。',
+        '好きな場所で過ごすと元気がチャージされるよ。お気に入りのカフェへ行ってみて。',
+        '集中力が高まる日。いちばん大事なことを朝のうちに片づけよう。'
+      ],
+      items: ['オレンジ色の付箋', 'チョコレート', '水玉模様のペン', 'ミニ手帳', 'お気に入りのイヤホン', 'あったかい缶コーヒー', 'レモン色のマフラー', 'カラフルなクリップ', 'ハートのシール', 'ココアの粉', 'キラキラのヘアゴム', '小さな手鏡'] },
+    { name: '吉', stars: 3, w: 26, color: '#3fcf9a', soft: '#dcf7ec',
+      msgs: [
+        '安定した一日。いつものルーティンを丁寧にこなすと運気キープ。',
+        'お昼ごはんをゆっくり味わうと、気持ちが整うよ。',
+        '身の回りを少し整えると運が通りやすくなるよ。机の上から始めよう。',
+        '焦らなくて大丈夫。ひとつずつ片づければちゃんと終わるよ。',
+        'ささいな幸せを見つけやすい日。空の色をながめてみて。',
+        'いつもより早く寝ると、明日の運気がぐんと上がるよ。',
+        '連絡していなかった友だちにひとこと送ると吉。気軽なスタンプでもOK。',
+        'お気に入りの飲みものをゆっくり飲むと、いい考えが浮かびそう。',
+        '小さな約束を守るほど運気が安定するよ。今日の予定は余裕を持って。',
+        'お散歩日和。5分だけでも外の空気を吸うと気分がすっきりするよ。'
+      ],
+      items: ['緑のしおり', 'ミントタブレット', '観葉植物', 'マイボトル', 'やわらかいクッション', '丸いクッキー', 'ふわふわのスリッパ', '小さな花束', 'グリーンのリボン', '好きな香りのキャンドル', 'はちみつ入りの紅茶', 'くまのぬいぐるみ'] },
+    { name: '小吉', stars: 2, w: 26, color: '#4db8f0', soft: '#dff2fd',
+      msgs: [
+        '小さなラッキーが散らばる日。足元の十円玉も見逃さないで。',
+        'おやつタイムが運気アップのカギ。甘いものでひと息つこう。',
+        '早めの行動が吉。待ち合わせは5分前を目指してみて。',
+        '好きな音楽を聴くと気分が上向きに。イヤホンを忘れずに。',
+        'ちょっと眠い日かも。無理せずこまめに休んでね。',
+        'お財布の中をすっきり整えると、小さな運が舞いこむよ。',
+        'あいさつを自分から言うと、いい一日のスタートに。',
+        'ちょっと遠回りして帰ると素敵なものに出会えるかも。',
+        'ひとつ好きなことに時間を使うと、気持ちが軽くなるよ。',
+        'ゆっくりお風呂に入ると運気が整うよ。湯船につかってね。'
+      ],
+      items: ['水色のハンカチ', 'ソーダ味のあめ', 'ビー玉', '折りたたみ傘', 'シールのついたノート', 'ミルクティー', 'ラムネ', 'しましまのマグカップ', 'ねこのマスコット', '小さなくし', 'あわあわの入浴剤', 'リップクリーム'] },
+    { name: '凶', stars: 1, w: 14, color: '#9a7cf0', soft: '#ece6fd',
+      msgs: [
+        '今日は慎重モード。先に確認すれば大きなミスはふせげるよ。',
+        'ちょっとついてない日でも、明日はきっと上向き。のんびりいこう。',
+        '言葉は少しやさしめに。深呼吸してから返信すると吉。',
+        '忘れ物に注意。出かける前にバッグの中をもう一度チェック！',
+        '無理は禁物。温かい飲みものでほっとひと息つこう。'
+      ],
+      items: ['お守り', 'あたたかいお茶', 'ふかふかの靴下', '小さなメモ帳', 'ハンドクリーム', 'ひざ掛け'] },
+    { name: '超ウルトラ大吉', label: '超ウルトラ\n大吉', ultra: true, stars: 7, total: 7, w: 0.5, color: '#ffb400', soft: '#fff3c4',
+      msgs: [
+        'なんと幻の超ウルトラ大吉！出会える確率は約0.5％。今日のあなたは最強です！',
+        '星が味方する伝説の一日。やりたかったことを今日こそ全部ためしちゃおう！',
+        '宇宙レベルの大幸運！この画面を友だちに自慢しちゃってもいいよ。'
+      ],
+      items: ['虹色のキラキラ星', '金のたまご', '流れ星のかけら', 'ダイヤのカプセル'] }
+  ];
+
+  var RAINBOW = 'linear-gradient(90deg, #ff6fa5, #ffa04d, #ffd45e, #5fdcae, #62c4f5, #b39af5)';
+
+  var COLORS = [
+    { n: 'ピンク', h: '#ff8fb8' }, { n: 'みずいろ', h: '#7fd0f5' }, { n: 'レモン', h: '#ffe066' },
+    { n: 'ミント', h: '#7ee0b8' }, { n: 'ラベンダー', h: '#b9a3f0' }, { n: 'オレンジ', h: '#ffa95c' },
+    { n: 'しろ', h: '#ffffff' }
+  ];
+
+  // ドーム内のカプセルの位置(%)。後ろの段から手前の段へ並べる
+  var PILE = [[40, 27], [60, 26], [24, 36], [50, 36], [77, 35], [14, 47], [36, 48], [63, 47], [86, 47], [50, 49], [24, 58], [36, 61], [48, 60], [72, 58]];
+  // 'rainbow' は虹色カプセル(3個)
+  var CAP_COLORS = ['#ff9ec6', '#6ec6f5', 'rainbow', '#ffd27a', '#b7a0f2', '#7fe3d1', '#ff9ec6', 'rainbow', '#6ec6f5', '#ffd27a', '#b7a0f2', 'rainbow', '#7fe3d1', '#ff9ec6'];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var choice = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+
+  var dome = $('glass'), winner = $('winner'), machine = $('machine');
+  var btn = $('draw'), label = $('drawLabel');
+  var overlay = $('overlay'), card = $('card'), again = $('again');
+  var busy = false;
+
+  // 日付は端末の今日の日付。開いたまま日をまたいでも自動で切り替わる
+  function setDate() {
+    try {
+      var d = new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+      var k = $('kicker');
+      if (k.textContent !== d + 'の運勢') k.textContent = d + 'の運勢';
+    } catch (e) {}
+  }
+  setDate();
+  setInterval(setDate, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setDate(); });
+
+  function place(el, x, y, r) {
+    el.style.left = x + '%';
+    el.style.top = y + '%';
+    el.firstChild.style.rotate = r + 'deg';
+  }
+
+  function rot(i) { return (i * 83) % 360 - 180; }
+
+  var caps = PILE.map(function (p, i) {
+    var el = document.createElement('i');
+    el.className = 'cap';
+    var body = document.createElement('i');
+    body.className = 'body';
+    el.appendChild(body);
+    if (CAP_COLORS[i] === 'rainbow') el.classList.add('rainbow');
+    else el.style.setProperty('--c', CAP_COLORS[i]);
+    place(el, p[0], p[1], rot(i));
+    dome.appendChild(el);
+    return el;
+  });
+
+  function scatter() {
+    caps.forEach(function (el) {
+      var a = Math.random() * Math.PI * 2;
+      var r = Math.sqrt(Math.random()) * 36;
+      place(el, 50 + Math.cos(a) * r, Math.min(50 + Math.sin(a) * r, 62), Math.random() * 360 - 180);
+    });
+  }
+
+  function pile() {
+    caps.forEach(function (el, i) { place(el, PILE[i][0], PILE[i][1], rot(i)); });
+  }
+
+  function pick() {
+    var total = FORTUNES.reduce(function (s, f) { return s + f.w; }, 0);
+    var r = Math.random() * total;
+    for (var i = 0; i < FORTUNES.length; i++) {
+      r -= FORTUNES[i].w;
+      if (r < 0) return FORTUNES[i];
+    }
+    return FORTUNES[FORTUNES.length - 1];
+  }
+
+  function starSvg(filled) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2.5 15,9 22,9.6 16.7,14.2 18.4,21.2 12,17.5 5.6,21.2 7.3,14.2 2,9.6 9,9" fill="' +
+      (filled ? 'var(--sun)' : '#ffffff') + '" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg>';
+  }
+
+  // ---- カードの飾り: キャラ(カプセルくん)・まわりのデコ・シールの形 ----
+  var INK = '#4a2c5a';
+
+  var LOOK = {
+    '大吉': { dot: '#ffc2d8', face: 'happy' },
+    '中吉': { dot: '#ffd8ad', face: 'smile' },
+    '吉': { dot: '#b9ecd6', face: 'smile' },
+    '小吉': { dot: '#bfe3f9', face: 'calm' },
+    '凶': { dot: '#d6c9f7', face: 'sad' },
+    '超ウルトラ大吉': { dot: '#ffe08a', face: 'star' }
+  };
+
+  function mascotSvg(f) {
+    var face = LOOK[f.name].face;
+    var line = 'fill="none" stroke="' + INK + '" stroke-width="2.6" stroke-linecap="round"';
+    var openMouth = '<path d="M24,37 Q32,50 40,37 Z" fill="#ff6f91" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>';
+    function dot(cx) { return '<ellipse cx="' + cx + '" cy="27" rx="2.6" ry="3.4" fill="' + INK + '"/>'; }
+    function starEye(cx) {
+      return '<path d="M' + cx + ',21 L' + (cx + 1.6) + ',25.4 L' + (cx + 6) + ',27 L' + (cx + 1.6) + ',28.6 L' + cx + ',33 L' + (cx - 1.6) + ',28.6 L' + (cx - 6) + ',27 L' + (cx - 1.6) + ',25.4 Z" fill="#ffd45e" stroke="' + INK + '" stroke-width="1.4" stroke-linejoin="round"/>';
+    }
+    var parts = {
+      happy: '<path d="M18,28 Q23,21 28,28" ' + line + '/><path d="M36,28 Q41,21 46,28" ' + line + '/>' + openMouth,
+      smile: dot(23) + dot(41) + '<path d="M26,38 Q32,44 38,38" ' + line + '/>',
+      calm: dot(23) + dot(41) + '<path d="M28,40 Q32,42 36,40" ' + line + '/>',
+      sad: dot(23) + dot(41) + '<path d="M17,20 L27,23 M47,20 L37,23" ' + line + '/><path d="M26,44 Q32,37 38,44" ' + line + '/><path d="M54,16 Q50,23 54,26 Q58,23 54,16 Z" fill="#7fd0f5" stroke="' + INK + '" stroke-width="1.6" stroke-linejoin="round"/>',
+      star: starEye(23) + starEye(41) + openMouth
+    };
+    var lower = f.ultra ? 'fill="url(#mrb)"' : 'style="fill:var(--rank)"';
+    var defs = f.ultra ? '<defs><linearGradient id="mrb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9ec6"/><stop offset=".25" stop-color="#ffd27a"/><stop offset=".5" stop-color="#8fe8b8"/><stop offset=".75" stop-color="#7fd0f5"/><stop offset="1" stop-color="#b7a0f2"/></linearGradient></defs>' : '';
+    var cheeks = '<ellipse cx="16" cy="36" rx="4.2" ry="2.8" fill="#ff9ec6" opacity=".85"/><ellipse cx="48" cy="36" rx="4.2" ry="2.8" fill="#ff9ec6" opacity=".85"/>';
+    return '<svg viewBox="0 0 64 64">' + defs +
+      '<circle cx="32" cy="32" r="28" fill="#fff"/>' +
+      '<path d="M4,32 A28,28 0 0 0 60,32 Z" ' + lower + '/>' +
+      '<circle cx="32" cy="32" r="28" fill="none" stroke="' + INK + '" stroke-width="3"/>' +
+      '<path d="M4,32 L60,32" stroke="' + INK + '" stroke-width="2"/>' +
+      cheeks + parts[face] + '</svg>';
+  }
+
+  var SHAPES = {
+    star: '<polygon points="12,2.5 15,9 22,9.6 16.7,14.2 18.4,21.2 12,17.5 5.6,21.2 7.3,14.2 2,9.6 9,9"/>',
+    heart: '<path d="M12,21 C5,15 2,11 2,7.5 C2,4.5 4.5,2.5 7,2.5 C9,2.5 11,3.8 12,6 C13,3.8 15,2.5 17,2.5 C19.5,2.5 22,4.5 22,7.5 C22,11 19,15 12,21 Z"/>',
+    sparkle: '<path d="M12,1 L14.6,9.4 L23,12 L14.6,14.6 L12,23 L9.4,14.6 L1,12 L9.4,9.4 Z"/>',
+    dot: '<circle cx="12" cy="12" r="8"/>',
+    cloud: '<path d="M7,18 C3.5,18 2,15.5 2.5,13 C3,10.8 5,9.8 6.8,10 C7.5,7 10,5.5 12.5,5.8 C15,6 17,7.8 17.4,10.2 C20,10 22,11.8 22,14.2 C22,16.4 20.4,18 18,18 Z"/>',
+    drop: '<path d="M12,2 C12,2 5,10 5,15 C5,18.9 8.1,22 12,22 C15.9,22 19,18.9 19,15 C19,10 12,2 12,2 Z"/>'
+  };
+
+  // [形, 左%, 上%, 大きさpx, 色, 回転deg, 揺れの遅れ秒]
+  var DECO_NORMAL = [
+    ['star', 100, 14, 26, '#ffd45e', 15, 0], ['heart', 100, 38, 24, '#ff8fb8', 12, .3],
+    ['sparkle', -1, 52, 22, '#ffffff', 0, .6], ['dot', 101, 62, 13, '#7fd0f5', 0, .9],
+    ['star', 99, 92, 22, '#b9a3f0', 18, .2], ['heart', 2, 95, 22, '#7ee0b8', -12, .5]
+  ];
+  var DECOS = {
+    '大吉': DECO_NORMAL,
+    '中吉': DECO_NORMAL,
+    '吉': DECO_NORMAL,
+    '小吉': DECO_NORMAL,
+    '凶': [
+      ['cloud', 100, 12, 38, '#dfe6f5', 0, 0], ['drop', 100, 34, 20, '#7fd0f5', 0, .3],
+      ['drop', -1, 55, 16, '#7fd0f5', 0, .6], ['cloud', 101, 70, 32, '#e8e0fa', 0, .2],
+      ['dot', 3, 96, 12, '#b9a3f0', 0, .5], ['drop', 98, 95, 18, '#7fd0f5', 0, .8]
+    ],
+    '超ウルトラ大吉': [
+      ['star', 100, 12, 30, '#ffd45e', 15, 0], ['sparkle', 100, 26, 24, '#ffffff', 0, .2],
+      ['heart', -1, 38, 26, '#ff8fb8', -10, .4], ['star', 101, 48, 26, '#7ee0b8', 15, .1],
+      ['sparkle', 0, 66, 24, '#ffe066', 0, .6], ['star', 100, 76, 28, '#ff8fb8', -12, .3],
+      ['heart', 99, 94, 24, '#7fd0f5', 12, .5], ['star', 1, 90, 28, '#b9a3f0', 10, .7],
+      ['sparkle', 50, -4, 20, '#ffffff', 0, .9], ['dot', 14, 100, 14, '#ffa95c', 0, .2]
+    ]
+  };
+
+  function decoSvg(f) {
+    return DECOS[f.name].map(function (d) {
+      return '<svg class="d" viewBox="0 0 24 24" style="left:' + d[1] + '%;top:' + d[2] + '%;width:' + d[3] + 'px;height:' + d[3] +
+        'px;--r:' + d[5] + 'deg;animation-delay:' + d[6] + 's" fill="' + d[4] + '" stroke="' + INK +
+        '" stroke-width="2" stroke-linejoin="round" aria-hidden="true">' + SHAPES[d[0]] + '</svg>';
+    }).join('');
+  }
+
+  // ギザギザの丸いシール(ランク文字の下地)
+  (function () {
+    var pts = [];
+    for (var i = 0; i < 28; i++) {
+      var a = i / 28 * Math.PI * 2, k = i % 2 ? 0.9 : 1;
+      pts.push((100 + Math.cos(a) * 98 * k).toFixed(1) + ',' + (60 + Math.sin(a) * 58 * k).toFixed(1));
+    }
+    $('sealPoly').setAttribute('points', pts.join(' '));
+  })();
+
+  function render(f) {
+    var col = f.ultra ? { n: 'にじいろ', h: RAINBOW } : choice(COLORS);
+    card.classList.toggle('ultra', !!f.ultra);
+    card.style.setProperty('--rank', f.color);
+    card.style.setProperty('--soft', f.soft);
+    card.style.setProperty('--dot', LOOK[f.name].dot);
+    $('mascot').innerHTML = mascotSvg(f);
+    $('deco').innerHTML = decoSvg(f);
+    $('cardLabel').textContent = f.ultra ? '幻の大当たり！' : '今日の運勢';
+    $('rank').textContent = f.label || f.name;
+    var total = f.total || 5;
+    var s = '';
+    for (var i = 1; i <= total; i++) s += starSvg(i <= f.stars);
+    $('stars').innerHTML = s;
+    $('stars').setAttribute('aria-label', f.ultra ? '運勢レベル 5段階を超えています' : '運勢レベル 5段階中' + f.stars);
+    $('advice').textContent = choice(f.msgs);
+    $('item').textContent = choice(f.items);
+    $('chip').style.background = col.h;
+    $('lcolor').textContent = col.n;
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = '';
+  }
+
+  function confetti() {
+    var layer = $('confetti');
+    var cols = ['#ff6fa5', '#62c4f5', '#ffd45e', '#5fdcae', '#b39af5', '#ffa04d'];
+    var h = window.innerHeight + 40;
+    for (var i = 0; i < 36; i++) {
+      var p = document.createElement('i');
+      p.className = 'conf';
+      p.style.background = cols[i % cols.length];
+      p.style.left = Math.random() * 100 + '%';
+      layer.appendChild(p);
+      var dx = (Math.random() - 0.5) * 160;
+      var anim = p.animate(
+        [
+          { transform: 'translate(0,-20px) rotate(0deg)', opacity: 1 },
+          { transform: 'translate(' + dx + 'px,' + h + 'px) rotate(' + (Math.random() * 720) + 'deg)', opacity: 1 }
+        ],
+        { duration: 1400 + Math.random() * 1200, delay: Math.random() * 300, easing: 'cubic-bezier(.3,.1,.6,1)', fill: 'both' }
+      );
+      anim.onfinish = (function (el) { return function () { el.remove(); }; })(p);
+    }
+  }
+
+  // ---- 効果音 (Web Audio で合成するので音声ファイルは使わない) ----
+  var Snd = (function () {
+    var ctx = null, master = null, noiseBuf = null, bus = null, on = true;
+    try { on = localStorage.getItem('omikuji-sound') !== 'off'; } catch (e) {}
+
+    function ensure() {
+      if (!on) return null;
+      if (!ctx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        try {
+          ctx = new AC();
+          master = ctx.createGain();
+          master.gain.value = 0.55;
+          master.connect(ctx.destination);
+          noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+          var d = noiseBuf.getChannelData(0);
+          for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        } catch (e) { ctx = null; return null; }
+      }
+      if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+      return ctx;
+    }
+
+    function tone(freq, t, dur, type, vol, slideTo, dest) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g);
+      g.connect(dest || master);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    }
+
+    function noise(t, dur, vol, freq, q, dest) {
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = noiseBuf;
+      f.type = 'bandpass';
+      f.frequency.value = freq;
+      f.Q.value = q;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f);
+      f.connect(g);
+      g.connect(dest || master);
+      s.start(t, Math.random() * 0.5, dur + 0.02);
+    }
+
+    // ビブラート付きのこもった音。悲しいトロンボーンのワァ〜ン用
+    function wah(freq, t, dur, slideTo, dest) {
+      var o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      var l = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      l.frequency.value = 5.5;
+      lg.gain.value = freq * 0.025;
+      l.connect(lg);
+      lg.connect(o.frequency);
+      f.type = 'lowpass';
+      f.Q.value = 5;
+      f.frequency.setValueAtTime(350, t);
+      f.frequency.linearRampToValueAtTime(1300, t + 0.1);
+      f.frequency.linearRampToValueAtTime(500, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.3, t + 0.03);
+      g.gain.setValueAtTime(0.3, t + dur - 0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(f);
+      f.connect(g);
+      g.connect(dest || master);
+      o.start(t);
+      l.start(t);
+      o.stop(t + dur + 0.05);
+      l.stop(t + dur + 0.05);
+    }
+
+    // 結果の曲は専用のバスに流し、次の曲やカードを閉じたときに止められるようにする
+    function fadeBus(c) {
+      if (!bus) return;
+      var now = c.currentTime;
+      try {
+        bus.gain.cancelScheduledValues(now);
+        bus.gain.setValueAtTime(bus.gain.value, now);
+        bus.gain.linearRampToValueAtTime(0, now + 0.08);
+      } catch (e) {}
+      bus = null;
+    }
+
+    function run(fn, useBus) {
+      var c = ensure();
+      if (!c) return;
+      try {
+        var out = master;
+        if (useBus) {
+          fadeBus(c);
+          bus = c.createGain();
+          bus.connect(master);
+          out = bus;
+        }
+        fn(c.currentTime, out);
+      } catch (e) { console.error('SND', e && e.message); }
+    }
+
+    function notes(list, t, type, vol, out) {
+      list.forEach(function (a) { tone(a[0], t + a[1], a[2], type, vol, 0, out); });
+    }
+
+    function sparkles(n, t, gap, out) {
+      for (var i = 0; i < n; i++) tone(2200 + Math.random() * 2200, t + i * gap, 0.18, 'sine', 0.07, 0, out);
+    }
+
+    // やわらかいベルの音。基音と少し高い倍音を重ねて、ゆっくり消える
+    function bell(freq, t, dur, vol, dest) {
+      [[1, 1, 1], [2.76, 0.3, 0.5], [5.4, 0.1, 0.25]].forEach(function (p) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        var d = dur * p[2], v = vol * p[1];
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq * p[0], t);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(v, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(g);
+        g.connect(dest || master);
+        o.start(t);
+        o.stop(t + d + 0.05);
+      });
+    }
+
+    var rattleStep = 0;
+    var BELL_HI = [784, 880, 1047, 1175, 1319, 1568];
+    var BELL_LO = [262, 294, 330, 392];
+    function pickOf(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+    // どれも約3秒
+    var SONGS = {
+      '大吉': function (t, o) {
+        notes([[523, 0, .22], [659, .12, .22], [784, .24, .22], [1047, .36, .22]], t, 'triangle', .24, o);
+        notes([[1319, .6, .22], [1175, .78, .22], [1319, .96, .22], [1568, 1.14, .35]], t, 'triangle', .22, o);
+        [1047, 1319, 1568, 2093].forEach(function (fq) { tone(fq, t + 1.5, 1.5, 'sine', .13, 0, o); });
+        tone(523, t + 1.5, 1.5, 'triangle', .14, 0, o);
+        sparkles(7, t + 1.6, .17, o);
+      },
+      '中吉': function (t, o) {
+        notes([[523, 0, .22], [659, .14, .22], [784, .28, .22], [784, .6, .22], [1047, .74, .22], [1319, 1.0, .34]], t, 'triangle', .23, o);
+        [1047, 1319, 1568].forEach(function (fq) { tone(fq, t + 1.35, 1.65, 'sine', .12, 0, o); });
+        tone(523, t + 1.35, 1.65, 'triangle', .12, 0, o);
+        sparkles(4, t + 1.5, .3, o);
+      },
+      '吉': function (t, o) {
+        notes([[784, 0, .25], [1047, .2, .25], [1319, .4, .4], [1175, 1.0, .25], [1047, 1.2, .25], [1319, 1.5, .5]], t, 'triangle', .22, o);
+        [1047, 1319].forEach(function (fq) { tone(fq, t + 2.0, 1.0, 'sine', .1, 0, o); });
+        tone(523, t + 2.0, 1.0, 'triangle', .1, 0, o);
+      },
+      '小吉': function (t, o) {
+        notes([[659, 0, .3], [784, .22, .35], [880, .7, .4], [784, 1.2, .35]], t, 'triangle', .2, o);
+        tone(1047, t + 1.6, 1.4, 'triangle', .18, 0, o);
+        tone(523, t + 1.6, 1.4, 'sine', .08, 0, o);
+        sparkles(2, t + 2.2, .3, o);
+      },
+      // 悲しいトロンボーン: ワッ ワッ ワッ ワァ〜〜ン
+      '凶': function (t, o) {
+        wah(311, t, .5, 0, o);
+        wah(294, t + .55, .5, 0, o);
+        wah(277, t + 1.1, .5, 0, o);
+        wah(262, t + 1.65, 1.35, 190, o);
+      }
+    };
+
+    return {
+      unlock: function () { ensure(); },
+      isOn: function () { return on; },
+      stop: function () { if (ctx) fadeBus(ctx); },
+      toggle: function () {
+        on = !on;
+        try { localStorage.setItem('omikuji-sound', on ? 'on' : 'off'); } catch (e) {}
+        if (on) run(function (t) { tone(880, t, 0.1, 'sine', 0.2); tone(1320, t + 0.08, 0.12, 'sine', 0.2); });
+        else if (ctx) fadeBus(ctx);
+      },
+      // ガランガラン / カラリン: 低いベルと高いベルが不規則に重なって響く
+      rattle: function () {
+        var step = rattleStep++;
+        run(function (t) {
+          bell(pickOf(BELL_HI), t + Math.random() * 0.05, 0.6, 0.06 + Math.random() * 0.03);
+          if (step % 2 === 0) bell(pickOf(BELL_LO), t + 0.02 + Math.random() * 0.03, 0.9, 0.1);
+          if (step % 3 === 1) bell(pickOf(BELL_HI), t + 0.07 + Math.random() * 0.04, 0.5, 0.045);
+        });
+      },
+      rise: function () {
+        run(function (t) {
+          tone(330, t, 1.1, 'sine', 0.06, 1320);
+          tone(660, t, 1.1, 'triangle', 0.03, 2640);
+        });
+      },
+      pop: function () { run(function (t) { tone(380, t, 0.16, 'sine', 0.3, 1000); }); },
+      open: function () {
+        run(function (t) {
+          noise(t, 0.14, 0.25, 5200, 0.8);
+          tone(1568, t + 0.02, 0.1, 'sine', 0.12);
+          tone(2093, t + 0.1, 0.1, 'sine', 0.12);
+          tone(2637, t + 0.18, 0.14, 'sine', 0.12);
+        });
+      },
+      jingle: function (name) {
+        run(function (t, o) { (SONGS[name] || SONGS['吉'])(t, o); }, true);
+      },
+      fanfare: function () {
+        run(function (t, o) {
+          notes([[523, 0], [659, .09], [784, .18], [1047, .27], [1319, .36], [1568, .45], [2093, .54]].map(function (a) { return [a[0], a[1], .25]; }), t, 'triangle', .22, o);
+          notes([[1568, .75, .2], [1319, .9, .2], [1568, 1.05, .2], [2093, 1.2, .24]], t, 'triangle', .2, o);
+          var t2 = t + 1.45;
+          [1047, 1319, 1568, 2093].forEach(function (fq) { tone(fq, t2, 1.55, 'sine', .13, 0, o); });
+          tone(523, t2, 1.55, 'triangle', .16, 0, o);
+          tone(262, t2, 1.55, 'sine', .12, 0, o);
+          for (var i = 0; i < 18; i++) tone(2000 + Math.random() * 2600, t + .3 + i * .14, .16, 'sine', .07, 0, o);
+        }, true);
+      }
+    };
+  })();
+
+  var sndBtn = $('snd');
+  function syncSnd() {
+    sndBtn.classList.toggle('off', !Snd.isOn());
+    sndBtn.setAttribute('aria-pressed', String(Snd.isOn()));
+  }
+  sndBtn.addEventListener('click', function () { Snd.toggle(); syncSnd(); });
+  syncSnd();
+
+  var STAR_COLORS = ['#ffd45e', '#ff6fa5', '#62c4f5', '#5fdcae', '#b39af5', '#ffa04d', '#ffffff'];
+
+  // 中心から星が四方八方に飛び散る
+  function starBurst(c, n, big) {
+    var layer = $('confetti');
+    var reach = Math.max(window.innerWidth, window.innerHeight);
+    for (var i = 0; i < n; i++) {
+      var el = document.createElement('i');
+      el.className = 'star';
+      var size = 14 + Math.random() * (big ? 40 : 28);
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.background = STAR_COLORS[i % STAR_COLORS.length];
+      el.style.left = (c.x - size / 2) + 'px';
+      el.style.top = (c.y - size / 2) + 'px';
+      layer.appendChild(el);
+      var a = Math.random() * Math.PI * 2;
+      var dist = reach * (0.25 + Math.random() * 0.55);
+      var dx = Math.cos(a) * dist;
+      var dy = Math.sin(a) * dist + 80;
+      var rot = (Math.random() - 0.5) * 900;
+      var anim = el.animate(
+        [
+          { transform: 'translate(0px,0px) scale(.2) rotate(0deg)', opacity: 1 },
+          { transform: 'translate(' + dx * 0.7 + 'px,' + dy * 0.7 + 'px) scale(1.1) rotate(' + rot * 0.7 + 'deg)', opacity: 1, offset: 0.6 },
+          { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.5) rotate(' + rot + 'deg)', opacity: 0 }
+        ],
+        { duration: 1300 + Math.random() * 1100, delay: Math.random() * 250, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'both' }
+      );
+      anim.onfinish = (function (e) { return function () { e.remove(); }; })(el);
+    }
+  }
+
+  // カードを表示している間、上から小さな星が降り続ける
+  var rainTimer = null;
+  function stopRain() {
+    if (rainTimer) { clearInterval(rainTimer); rainTimer = null; }
+  }
+  function startRain() {
+    stopRain();
+    var layer = $('confetti');
+    rainTimer = setInterval(function () {
+      var el = document.createElement('i');
+      el.className = 'star';
+      var size = 10 + Math.random() * 18;
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.background = STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
+      el.style.left = Math.random() * window.innerWidth + 'px';
+      el.style.top = (-size) + 'px';
+      layer.appendChild(el);
+      var anim = el.animate(
+        [
+          { transform: 'translate(0px,0px) rotate(0deg)', opacity: 1 },
+          { transform: 'translate(' + (Math.random() - 0.5) * 80 + 'px,' + (window.innerHeight + 60) + 'px) rotate(' + Math.random() * 540 + 'deg)', opacity: 1 }
+        ],
+        { duration: 2200 + Math.random() * 1500, easing: 'linear' }
+      );
+      anim.onfinish = function () { el.remove(); };
+    }, 160);
+  }
+
+  function flash() {
+    var fl = $('flash'), app = $('app');
+    fl.classList.remove('go');
+    app.classList.remove('megashake');
+    void fl.offsetWidth;
+    fl.classList.add('go');
+    app.classList.add('megashake');
+    setTimeout(function () { app.classList.remove('megashake'); }, 800);
+  }
+
+  function centerOf(el) {
+    var r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  async function draw() {
+    if (busy) return;
+    busy = true;
+    var f = pick();
+    setDate();
+    Snd.unlock();
+    btn.disabled = true;
+    label.textContent = 'ガラガラ…';
+    machine.classList.add('shake');
+
+    var end = Date.now() + (reduce ? 500 : 1900);
+    while (Date.now() < end) {
+      scatter();
+      Snd.rattle();
+      await sleep(reduce ? 250 : 170);
+    }
+    if (f.ultra && !reduce) {
+      label.textContent = '光ってる…!?';
+      machine.classList.add('glow');
+      Snd.rise();
+      end = Date.now() + 1100;
+      while (Date.now() < end) {
+        scatter();
+        Snd.rattle();
+        await sleep(110);
+      }
+      machine.classList.remove('glow');
+    }
+    machine.classList.remove('shake');
+    pile();
+
+    winner.style.setProperty('--c', f.ultra ? RAINBOW : f.color);
+    winner.className = 'winner pop';
+    Snd.pop();
+    await sleep(reduce ? 200 : 650);
+    var origin = centerOf(winner);
+    winner.classList.add('open');
+    Snd.open();
+    if (f.ultra) Snd.fanfare();
+    if (!reduce) {
+      if (f.ultra) {
+        flash();
+        starBurst(origin, 80, true);
+      } else {
+        confetti();
+      }
+    }
+    await sleep(reduce ? 100 : 650);
+
+    render(f);
+    overlay.hidden = false;
+    again.focus();
+    if (!f.ultra) Snd.jingle(f.name);
+    if (f.ultra && !reduce) {
+      setTimeout(function () { starBurst(centerOf(card), 60, true); }, 300);
+      startRain();
+    }
+    winner.className = 'winner';
+    label.textContent = 'ガチャを引く';
+    btn.disabled = false;
+    busy = false;
+  }
+
+  function closeResult() {
+    stopRain();
+    Snd.stop();
+    overlay.hidden = true;
+    btn.focus();
+  }
+
+  btn.addEventListener('click', draw);
+  again.addEventListener('click', function () { closeResult(); draw(); });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeResult(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !overlay.hidden) closeResult();
+  });
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
