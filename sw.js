@@ -1,6 +1,6 @@
 // おみくじガチャ: オフラインでも遊べるようにするサービスワーカー
 // ファイルを更新したら、下の VERSION の数字を変えると全員の端末に確実に反映されます
-var VERSION = 'omikuji-v2';
+var VERSION = 'omikuji-v3';
 var CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
